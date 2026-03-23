@@ -5,6 +5,7 @@ import org.apache.logging.log4j.Logger;
 import org.example.protocols.apps.BroadcastApp;
 import org.example.protocols.broadcast.flood.FloodBroadcast;
 import org.example.protocols.membership.full.GossipBasedFullMembership;
+import org.example.protocols.membership.hyparview.HyParViewMembership;
 import pt.unl.fct.di.novasys.babel.core.Babel;
 import pt.unl.fct.di.novasys.network.data.Host;
 import org.example.utils.InterfaceToIp;
@@ -50,7 +51,8 @@ public class Main {
         // Broadcast Protocol
         FloodBroadcast broadcast = new FloodBroadcast(props, myself);
         // Membership Protocol
-        GossipBasedFullMembership membership = new GossipBasedFullMembership(props, myself);
+        //GossipBasedFullMembership membership = new GossipBasedFullMembership(props, myself);
+        HyParViewMembership membership = new HyParViewMembership(props, myself);
 
         //Register applications in babel
         babel.registerProtocol(broadcastApp);
