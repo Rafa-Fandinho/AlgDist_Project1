@@ -3,6 +3,10 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 .kotlin
+dependency-reduced-pom.xml
+build.log
+logs/
+*.log
 
 ### IntelliJ IDEA ###
 .idea/modules.xml
