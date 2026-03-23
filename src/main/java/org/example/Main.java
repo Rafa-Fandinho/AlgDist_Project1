@@ -5,6 +5,7 @@ import org.apache.logging.log4j.Logger;
 import org.example.protocols.apps.BroadcastApp;
 import org.example.protocols.broadcast.eagerpush.EagerPushBroadcast;
 import org.example.protocols.broadcast.flood.FloodBroadcast;
+import org.example.protocols.membership.cyclon.CyclonMembership;
 import org.example.protocols.membership.full.GossipBasedFullMembership;
 import pt.unl.fct.di.novasys.babel.core.Babel;
 import pt.unl.fct.di.novasys.network.data.Host;
@@ -52,7 +53,7 @@ public class Main {
 //        FloodBroadcast broadcast = new FloodBroadcast(props, myself);
         EagerPushBroadcast broadcast = new EagerPushBroadcast(props, myself);
         // Membership Protocol
-        GossipBasedFullMembership membership = new GossipBasedFullMembership(props, myself);
+        CyclonMembership membership = new CyclonMembership(props, myself);
 
         //Register applications in babel
         babel.registerProtocol(broadcastApp);
