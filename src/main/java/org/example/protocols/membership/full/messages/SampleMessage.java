@@ -38,7 +38,6 @@ public class SampleMessage extends ProtoMessage {
             for (Host h : sampleMessage.sample)
                 Host.serializer.serialize(h, out);
         }
-
         @Override
         public SampleMessage deserialize(ByteBuf in) throws IOException {
             int size = in.readInt();

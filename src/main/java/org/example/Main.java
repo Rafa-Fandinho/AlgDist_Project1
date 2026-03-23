@@ -3,7 +3,9 @@ package org.example;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.example.protocols.apps.BroadcastApp;
+import org.example.protocols.broadcast.eagerpush.EagerPushBroadcast;
 import org.example.protocols.broadcast.flood.FloodBroadcast;
+import org.example.protocols.membership.cyclon.CyclonMembership;
 import org.example.protocols.membership.full.GossipBasedFullMembership;
 import org.example.protocols.membership.hyparview.HyParViewMembership;
 import pt.unl.fct.di.novasys.babel.core.Babel;
@@ -47,9 +49,10 @@ public class Main {
         logger.info("Hello, I am {}", myself);
 
         // Application
-        BroadcastApp broadcastApp = new BroadcastApp(myself, props, FloodBroadcast.PROTOCOL_ID);
+        BroadcastApp broadcastApp = new BroadcastApp(myself, props, EagerPushBroadcast.PROTOCOL_ID);
         // Broadcast Protocol
-        FloodBroadcast broadcast = new FloodBroadcast(props, myself);
+//        FloodBroadcast broadcast = new FloodBroadcast(props, myself);
+        EagerPushBroadcast broadcast = new EagerPushBroadcast(props, myself);
         // Membership Protocol
         //GossipBasedFullMembership membership = new GossipBasedFullMembership(props, myself);
         HyParViewMembership membership = new HyParViewMembership(props, myself);
