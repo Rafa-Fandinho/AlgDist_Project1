@@ -16,12 +16,12 @@ Open 2 different terminals and run the following commands:
 
 **Node 1:**
 ```bash
-java -cp target/Project1-jar-with-dependencies.jar org.example.Main interface=eth2 port=10101
+java -cp target/Project1.jar org.example.Main interface=eth2 port=10101
 ```
 
 **Node 2:**
 ```bash
-java -cp target/Project1-jar-with-dependencies.jar org.example.Main interface=eth2 port=10102 contact=<YOUR-IPV4>:<PORT-OF-NODE1>
+java -cp target/Project1.jar org.example.Main interface=eth2 port=10102 contact=<YOUR-IPV4>:<PORT-OF-NODE1>
 ```
 
 ## 3. Finding your Network Interface

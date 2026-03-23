@@ -50,11 +50,13 @@ public class Main {
 
         // Application
         BroadcastApp broadcastApp = new BroadcastApp(myself, props, EagerPushBroadcast.PROTOCOL_ID);
+
         // Broadcast Protocol
 //        FloodBroadcast broadcast = new FloodBroadcast(props, myself);
         EagerPushBroadcast broadcast = new EagerPushBroadcast(props, myself);
+
         // Membership Protocol
-        //GossipBasedFullMembership membership = new GossipBasedFullMembership(props, myself);
+//        GossipBasedFullMembership membership = new GossipBasedFullMembership(props, myself);
         HyParViewMembership membership = new HyParViewMembership(props, myself);
 
         //Register applications in babel
