@@ -10,7 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ShuffleRequestMessage extends ProtoMessage {
-    public final static short MSG_ID = 101;
+    public final static short MSG_ID = 102;
 
     private final Map<Host,Integer> shuffleRequest;
 

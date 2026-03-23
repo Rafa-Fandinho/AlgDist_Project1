@@ -24,7 +24,7 @@ public class CyclonMembership extends GenericProtocol {
     private static final Logger logger = LogManager.getLogger(CyclonMembership.class);
 
     //Protocol information, to register in babel
-    public final static short PROTOCOL_ID = 105;        //For instance
+    public final static short PROTOCOL_ID = 100;        //For instance
     public final static String PROTOCOL_NAME = "Cyclon";
 
     private final Host self;     //My own address/port
