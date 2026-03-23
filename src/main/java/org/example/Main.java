@@ -7,6 +7,7 @@ import org.example.protocols.broadcast.eagerpush.EagerPushBroadcast;
 import org.example.protocols.broadcast.flood.FloodBroadcast;
 import org.example.protocols.membership.cyclon.CyclonMembership;
 import org.example.protocols.membership.full.GossipBasedFullMembership;
+import org.example.protocols.membership.hyparview.HyParViewMembership;
 import pt.unl.fct.di.novasys.babel.core.Babel;
 import pt.unl.fct.di.novasys.network.data.Host;
 import org.example.utils.InterfaceToIp;
@@ -53,7 +54,8 @@ public class Main {
 //        FloodBroadcast broadcast = new FloodBroadcast(props, myself);
         EagerPushBroadcast broadcast = new EagerPushBroadcast(props, myself);
         // Membership Protocol
-        CyclonMembership membership = new CyclonMembership(props, myself);
+        //GossipBasedFullMembership membership = new GossipBasedFullMembership(props, myself);
+        HyParViewMembership membership = new HyParViewMembership(props, myself);
 
         //Register applications in babel
         babel.registerProtocol(broadcastApp);
