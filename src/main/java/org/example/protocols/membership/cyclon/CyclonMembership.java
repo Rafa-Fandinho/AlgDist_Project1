@@ -138,6 +138,7 @@ public class CyclonMembership extends GenericProtocol {
         //Received a shuffle request from a neighbor. We answer with a sample of our own neighbors and merge the received host set
         //with our own neighbor list.
         logger.debug("Received {} from {}", msg, from);
+        openConnection(from);
         Map<Host,Integer> temporarySample = getRandomSubsetExcluding(neigh,subsetSize,from);
         sendMessage(new ShuffleReplyMessage(temporarySample),from);
         mergeViews(msg.getSample(),temporarySample);
@@ -165,6 +166,7 @@ public class CyclonMembership extends GenericProtocol {
             }
             else if(neigh.size()<maxN){
                 neigh.put(peerEntry.getKey(),peerEntry.getValue());
+                openConnection(peerEntry.getKey());
             }
             else{
                 Host host = null;
@@ -179,6 +181,7 @@ public class CyclonMembership extends GenericProtocol {
                 }
                 neigh.remove(host);
                 neigh.put(peerEntry.getKey(),peerEntry.getValue());
+                openConnection(peerEntry.getKey());
             }
         }
     }
@@ -192,9 +195,10 @@ public class CyclonMembership extends GenericProtocol {
         }
         Host p = getOldest();
         if(p != null){
-            neigh.remove(p);
             sample=getRandomSubsetExcluding(neigh,subsetSize,p);
             sample.put(self,0);
+
+            openConnection(p);
             sendMessage(new ShuffleRequestMessage(sample), p);
         }
     }
