@@ -28,7 +28,7 @@ public class InterfaceToIp {
         if ((interfaceName = props.getProperty("interface")) != null) {
             String ip = InterfaceToIp.getIpOfInterface(interfaceName);
             if(ip != null)
-                props.setProperty("address", ip);
+                props.setProperty("babel.address", ip);
             else {
                 throw new InvalidParameterException("Property interface is set to " + interfaceName + ", but has no ip");
             }

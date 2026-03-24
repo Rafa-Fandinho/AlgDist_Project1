@@ -1,17 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration status="INFO" shutdownHook="disable">
     <Appenders>
-        <Console name="Console" target="SYSTEM_OUT">
-				<PatternLayout pattern="%highlight{%level{length=1}[%d{HH:mm:ss,SSS}] [%t]%logger{0}:} %msg%n"/>
+        <Console name="console" target="SYSTEM_OUT">
+            <PatternLayout
+                    pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n" />
         </Console>
 
-        <File name="MyFile" fileName="${sys:logFilename}.log" append="false" immediateFlush="true">
-            <PatternLayout pattern="%highlight{%level{length=1}[%d{HH:mm:ss,SSS}] [%t]%logger{0}:} %msg%n"/>
+        <File name="msglog" fileName="message.log"
+              immediateFlush="false"
+              append="false">
+            <PatternLayout
+                    pattern="%d{UNIX_MILLIS} %msg%n" />
         </File>
 
     </Appenders>
 
     <Loggers>
+
         <!-- UNCOMMENT TO SPECIFY LOG LEVEL OF PACKAGES
         <Logger level="info" name="protocols.apps"/>
         <Logger level="info" name="protocols.overlays"/>
@@ -23,11 +28,13 @@
         <Logger level="info" name="channel"/>
         <Logger level="info" name="babel"/>
 
+        <Logger name="protocols.apps" level="info" additivity="true">
+            <AppenderRef ref="msglog" />
+        </Logger>
 
         <Root level="debug">
-            <AppenderRef ref="Console" level="info"/>
-           <AppenderRef ref="MyFile" level="all"/>
-       </Root>
-   </Loggers>
+            <AppenderRef ref="console" level="info"/>
+        </Root>
+    </Loggers>
 
 </Configuration>
