@@ -4,7 +4,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.example.protocols.apps.BroadcastApp;
 import org.example.protocols.broadcast.eagerpush.EagerPushBroadcast;
+import org.example.protocols.broadcast.flood.FloodBroadcast;
+import org.example.protocols.membership.cyclon.CyclonMembership;
 import org.example.protocols.membership.full.GossipBasedFullMembership;
+import org.example.protocols.membership.hyparview.HyParViewMembership;
 import pt.unl.fct.di.novasys.babel.core.Babel;
 import pt.unl.fct.di.novasys.network.data.Host;
 import org.example.utils.InterfaceToIp;
@@ -48,20 +51,20 @@ public class Main {
         // Application
         BroadcastApp broadcastApp = new BroadcastApp(myself, props, EagerPushBroadcast.PROTOCOL_ID);
         // Broadcast Protocol
-//        FloodBroadcast broadcast = new FloodBroadcast(props, myself);
-        EagerPushBroadcast eagerPushBroadcast = new EagerPushBroadcast(props, myself);
+        FloodBroadcast broadcast = new FloodBroadcast(props, myself);
+//        EagerPushBroadcast broadcast = new EagerPushBroadcast(props, myself);
         // Membership Protocol
-        GossipBasedFullMembership membership = new GossipBasedFullMembership(props, myself);
+        CyclonMembership membership = new CyclonMembership(props, myself);
 
         //Register applications in babel
         babel.registerProtocol(broadcastApp);
-        babel.registerProtocol(eagerPushBroadcast);
+        babel.registerProtocol(broadcast);
         babel.registerProtocol(membership);
 
         //Init the protocols. This should be done after creating all protocols, since there can be inter-protocol
         //communications in this step.
         broadcastApp.init(props);
-        eagerPushBroadcast.init(props);
+        broadcast.init(props);
         membership.init(props);
 
         //Start babel and protocol threads
