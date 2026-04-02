@@ -132,7 +132,7 @@ public class HyParViewMembership extends GenericProtocol{
                 pending.add(contactHost);
                 openConnection(contactHost);
                 sendMessage(new JoinMessage(self), contactHost);
-                logger.debug("Sent JoinMessage to contact node {}", contactHost);
+                logger.debug("[{}] Sent JoinMessage to contact node {}", self, contactHost);
             } catch (Exception e) {
                 logger.error("Invalid contact on configuration: '" + props.getProperty("contacts"));
                 e.printStackTrace();    
@@ -166,8 +166,10 @@ public class HyParViewMembership extends GenericProtocol{
     }
 
     private void uponJoinReply(JoinReplyMessage msg, Host from, short sourceProto, int channelId) {
-        logger.info("[{}] Received JOIN REPLY from {}", self, msg.getSender());
-        addToActiveView(msg.getSender());
+        Host sender = msg.getSender();
+        logger.info("[{}] Received JOIN REPLY from {}", self, sender);
+        pending.remove(sender);
+        addToActiveView(sender);
     }
 
 
@@ -202,13 +204,13 @@ public class HyParViewMembership extends GenericProtocol{
             if (ttl == PRWL) {
                 addToPassiveView(newNode);
             }
-        }
 
-        Host n = getRandomSubsetExcluding(activeView, 1, msg.getSender()).stream().findFirst().orElse(null);
-
-        if (n != null) {
-            sendMessage(new ForwardJoinMessage(newNode, ttl - 1, self), n);
-            logger.debug("[{}] Forwarded FORWARD JOIN for {} to {} with TTL {}", self, newNode, n, ttl - 1);
+            Host n = getRandomSubsetExcluding(activeView, 1, msg.getSender()).stream().findFirst().orElse(null);
+    
+            if (n != null) {
+                sendMessage(new ForwardJoinMessage(newNode, ttl - 1, self), n);
+                logger.debug("[{}] Forwarded FORWARD JOIN for {} to {} with TTL {}", self, newNode, n, ttl - 1);
+            }
         }
     }
 
@@ -236,7 +238,7 @@ public class HyParViewMembership extends GenericProtocol{
     */
     private void uponNeighbourReply(NeighborReplyMessage msg, Host from, short sourceProto, int channelId){
         Host sender = msg.getSender();
-        logger.info("[{}] Received Neighbour Reply (Accepted={}) from {}", msg.isAccepted(), self, sender);
+        logger.info("[{}] Received Neighbour Reply (Accepted={}) from {}", self, msg.isAccepted(), sender);
         pending.remove(sender);
         if(msg.isAccepted()){ addToActiveView(sender); } else { tryPromoteNeighbor();}
     }
@@ -250,6 +252,7 @@ public class HyParViewMembership extends GenericProtocol{
     private void uponDisconnect(DisconnectMessage msg, Host from, short sourceProto, int channelId){
             Host peer = msg.getSender();
             logger.info("[{}] Received Disconnect from {}", self, peer);
+        
             if(activeView.contains(peer)){
                 activeView.remove(peer);
                 addToPassiveView(peer);
@@ -280,7 +283,7 @@ public class HyParViewMembership extends GenericProtocol{
         } else {
             Set<Host> replySample = getRandomSubsetExcluding(passiveView, msg.getSample().size(), self);
             sendMessage(new ShuffleReplyMessage(self, replySample), msg.getOriginalSender());
-            logger.debug("[{}] Sent ShuffleReplyMessage to {} with {} nodes", msg.getOriginalSender(), self, replySample.size());
+            logger.debug("[{}] Sent ShuffleReplyMessage to {} with {} nodes", self, msg.getOriginalSender(), replySample.size());
 
             for(Host h: msg.getSample()){
                 addToPassiveView(h);
