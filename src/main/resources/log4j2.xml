@@ -7,7 +7,7 @@
         </Console>
 
         <File name="msglog" fileName="message.log"
-              immediateFlush="false"
+              immediateFlush="true"
               append="false">
             <PatternLayout
                     pattern="%d{UNIX_MILLIS} %msg%n" />
@@ -28,7 +28,7 @@
         <Logger level="info" name="channel"/>
         <Logger level="info" name="babel"/>
 
-        <Logger name="protocols.apps" level="info" additivity="true">
+        <Logger name="org.example.protocols.apps" level="info" additivity="false">
             <AppenderRef ref="msglog" />
         </Logger>
 

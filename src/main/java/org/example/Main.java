@@ -53,9 +53,6 @@ public class Main {
         String membershipType = props.getProperty("membership", "full");
         String broadcastType = props.getProperty("broadcast", "flood");
 
-        // Application
-        BroadcastApp broadcastApp = new BroadcastApp(myself, props, FloodBroadcast.PROTOCOL_ID);
-
         // Broadcast Protocol
         GenericProtocol broadcast = switch (broadcastType.toLowerCase()) {
             case "flood" -> new FloodBroadcast(props, myself);
@@ -70,6 +67,9 @@ public class Main {
             case "full" -> new GossipBasedFullMembership(props, myself);
             default -> throw new IllegalArgumentException("Unknown membership: " + membershipType);
         };
+
+        // Application
+        BroadcastApp broadcastApp = new BroadcastApp(myself, props, broadcast.getProtoId());
 
         logger.info("Using membership: {}", membershipType);
         logger.info("Using broadcast: {}", broadcastType);

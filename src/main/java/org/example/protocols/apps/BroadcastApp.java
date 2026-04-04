@@ -166,7 +166,14 @@ public class BroadcastApp extends GenericProtocol {
         byte[] payload = toSend.getBytes(StandardCharsets.US_ASCII);
 
         BroadcastRequest request = new BroadcastRequest(UUID.randomUUID(), self, payload);
-        logger.info(getTimeStamp() + " " + nodeLabel + " SEND " + request.getMsgId() + " " + request.getMsg().length);
+
+		logger.info(
+				getTimeStamp() + " " +  // <date> <time>
+				self.getAddress().getHostAddress() + ":" + self.getPort() +  // <node-ip:port>
+				" SEND " +
+				self.getAddress().getHostAddress() + ":" + self.getPort() + "::" + request.getMsgId() + " " +		// <msg-id>
+				request.getMsg().length		// <size>
+		);
         //And send it to the dissemination protocol
         sendRequest(request, broadcastProtoId);
     }
@@ -193,8 +200,13 @@ public class BroadcastApp extends GenericProtocol {
 	}
 	
     private void uponDeliver(DeliverNotification msg, short sourceProto) {
-    	logger.info(getTimeStamp() + " " + nodeLabel + " RECV " + msg.getMsgId() + " " + msg.getMsg().length);
-        
+		logger.info(
+				getTimeStamp() + " " +
+				self.getAddress().getHostAddress() + ":" + self.getPort() +
+				" RECV " +
+				msg.getSender().getAddress().getHostAddress() + ":" + msg.getSender().getPort() + "::" + msg.getMsgId() + " " +
+				msg.getMsg().length
+		);
     }
 
     public static String randomCapitalLetters(int length) {
