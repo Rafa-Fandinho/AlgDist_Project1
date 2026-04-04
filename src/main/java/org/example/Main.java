@@ -9,6 +9,7 @@ import org.example.protocols.membership.cyclon.CyclonMembership;
 import org.example.protocols.membership.full.GossipBasedFullMembership;
 import org.example.protocols.membership.hyparview.HyParViewMembership;
 import pt.unl.fct.di.novasys.babel.core.Babel;
+import pt.unl.fct.di.novasys.babel.core.GenericProtocol;
 import pt.unl.fct.di.novasys.network.data.Host;
 import org.example.utils.InterfaceToIp;
 
@@ -48,13 +49,30 @@ public class Main {
 
         logger.info("Hello, I am {}", myself);
 
+        // Choose which protocol to use
+        String membershipType = props.getProperty("membership", "full");
+        String broadcastType = props.getProperty("broadcast", "flood");
+
         // Application
         BroadcastApp broadcastApp = new BroadcastApp(myself, props, FloodBroadcast.PROTOCOL_ID);
+
         // Broadcast Protocol
-        FloodBroadcast broadcast = new FloodBroadcast(props, myself);
-//        EagerPushBroadcast broadcast = new EagerPushBroadcast(props, myself);
+        GenericProtocol broadcast = switch (broadcastType.toLowerCase()) {
+            case "flood" -> new FloodBroadcast(props, myself);
+            case "eagerpush" -> new EagerPushBroadcast(props, myself);
+            default -> throw new IllegalArgumentException("Unknown broadcast: " + broadcastType);
+        };
+
         // Membership Protocol
-        CyclonMembership membership = new CyclonMembership(props, myself);
+        GenericProtocol membership = switch (membershipType.toLowerCase()) {
+            case "cyclon" -> new CyclonMembership(props, myself);
+            case "hyparview" -> new HyParViewMembership(props, myself);
+            case "full" -> new GossipBasedFullMembership(props, myself);
+            default -> throw new IllegalArgumentException("Unknown membership: " + membershipType);
+        };
+
+        logger.info("Using membership: {}", membershipType);
+        logger.info("Using broadcast: {}", broadcastType);
 
         //Register applications in babel
         babel.registerProtocol(broadcastApp);
