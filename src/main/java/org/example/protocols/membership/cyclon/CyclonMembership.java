@@ -40,7 +40,7 @@ public class CyclonMembership extends GenericProtocol {
     private final int sampleTime; //param: timeout for samples
 
     public final static String PAR_SAMPLE_SIZE = "protocol.membership.samplesize";
-    public final static String PAR_DEFAULT_SAMPLE_SIZE = "6";
+    public final static String PAR_DEFAULT_SAMPLE_SIZE = "4";
     private final int subsetSize; //param: maximum size of sample;
 
     private final Random rnd;
@@ -146,6 +146,7 @@ public class CyclonMembership extends GenericProtocol {
     private void uponShuffleReply(ShuffleReplyMessage msg, Host from, short sourceProto, int channelId) {
         //Received a shuffle response from a neighbor. We merge the received host set with our own neighbor list
         logger.debug("Received {} from {}", msg, from);
+        neigh.put(from,0);
         mergeViews(msg.getSample(),sample);
     }
 
@@ -180,6 +181,7 @@ public class CyclonMembership extends GenericProtocol {
                     host = getRandom(neigh.keySet());
                 }
                 neigh.remove(host);
+                closeConnection(host);
                 neigh.put(peerEntry.getKey(),peerEntry.getValue());
                 openConnection(peerEntry.getKey());
             }
@@ -195,8 +197,10 @@ public class CyclonMembership extends GenericProtocol {
         }
         Host p = getOldest();
         if(p != null){
-            sample=getRandomSubsetExcluding(neigh,subsetSize,p);
+            sample=getRandomSubsetExcluding(neigh,subsetSize-1,p);
             sample.put(self,0);
+
+            neigh.remove(p);
 
             openConnection(p);
             sendMessage(new ShuffleRequestMessage(sample), p);
