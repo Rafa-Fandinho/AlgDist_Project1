@@ -38,7 +38,7 @@ public class EagerPushBroadcast extends GenericProtocol {
         this.channelReady = false;
 
         // Read the fanout parameter from the configuration file (defaults to 3 if not found)
-        this.fanout = Integer.parseInt(properties.getProperty("fanout", "3"));
+        this.fanout = Integer.parseInt(properties.getProperty("fanout", "6"));
 
         /*--------------------- Register Request Handlers ----------------------------- */
         registerRequestHandler(BroadcastRequest.REQUEST_ID, this::uponBroadcastRequest);
