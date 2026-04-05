@@ -239,8 +239,8 @@ public class HyParViewMembership extends GenericProtocol{
     private void uponNeighbourReply(NeighborReplyMessage msg, Host from, short sourceProto, int channelId){
         Host sender = msg.getSender();
         logger.info("[{}] Received Neighbour Reply (Accepted={}) from {}", self, msg.isAccepted(), sender);
-        pending.remove(sender);
-        if(msg.isAccepted()){ addToActiveView(sender); } else { tryPromoteNeighbor();}
+        pending.remove(sender); 
+        if(msg.isAccepted()){ addToActiveView(sender); } else { passiveView.remove(sender); tryPromoteNeighbor();}
     }
 
     /* PSEUDOCODIGO
@@ -252,17 +252,16 @@ public class HyParViewMembership extends GenericProtocol{
     private void uponDisconnect(DisconnectMessage msg, Host from, short sourceProto, int channelId){
             Host peer = msg.getSender();
             logger.info("[{}] Received Disconnect from {}", self, peer);
-        
-            if(activeView.contains(peer)){
+
+            if (activeView.contains(peer)) {
                 activeView.remove(peer);
                 addToPassiveView(peer);
+                closeConnection(peer);
+                triggerNotification(new NeighbourDown(peer));
+                logger.trace("[{}] Removed {} from Active View (Disconnect). Current Active: {}", self, peer, activeView);
+                tryPromoteNeighbor();
             }
 
-            closeConnection(peer);
-            triggerNotification(new NeighbourDown(peer));
-            logger.trace("[{}] Removed {} from Active View (Disconnect). Current Active: {}", self, peer, activeView);
-
-            tryPromoteNeighbor();
     }
 
     /* POWERPOINT
@@ -282,8 +281,8 @@ public class HyParViewMembership extends GenericProtocol{
             }
         } else {
             Set<Host> replySample = getRandomSubsetExcluding(passiveView, msg.getSample().size(), self);
-            sendMessage(new ShuffleReplyMessage(self, replySample), msg.getOriginalSender());
-            logger.debug("[{}] Sent ShuffleReplyMessage to {} with {} nodes", self, msg.getOriginalSender(), replySample.size());
+            sendMessage(new ShuffleReplyMessage(self, replySample), from);
+            logger.debug("[{}] Sent ShuffleReplyMessage to {} with {} nodes", self, from, replySample.size());
 
             for(Host h: msg.getSample()){
                 addToPassiveView(h);
