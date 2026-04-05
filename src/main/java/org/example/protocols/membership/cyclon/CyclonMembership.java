@@ -33,14 +33,14 @@ public class CyclonMembership extends GenericProtocol {
     private Map<Host,Integer> sample; //Sample of neighbors sent to the other process in the last shuffle
 
     public final static String PAR_MAX_NEIGHBORS = "protocol.membership.maxN";
-    public final static String PAR_DEFAULT_MAX_NEIGHBORS = "5"; //For instance
+    public final static String PAR_DEFAULT_MAX_NEIGHBORS = "15"; //For instance
 
     public final static String PAR_SAMPLE_TIME = "protocol.membership.sampletime";
-    public final static String PAR_DEFAULT_SAMPLE_TIME = "2000"; //2 seconds
+    public final static String PAR_DEFAULT_SAMPLE_TIME = "1000"; //1 seconds
     private final int sampleTime; //param: timeout for samples
 
     public final static String PAR_SAMPLE_SIZE = "protocol.membership.samplesize";
-    public final static String PAR_DEFAULT_SAMPLE_SIZE = "4";
+    public final static String PAR_DEFAULT_SAMPLE_SIZE = "8";
     private final int subsetSize; //param: maximum size of sample;
 
     private final Random rnd;
@@ -146,7 +146,6 @@ public class CyclonMembership extends GenericProtocol {
     private void uponShuffleReply(ShuffleReplyMessage msg, Host from, short sourceProto, int channelId) {
         //Received a shuffle response from a neighbor. We merge the received host set with our own neighbor list
         logger.debug("Received {} from {}", msg, from);
-        neigh.put(from,0);
         mergeViews(msg.getSample(),sample);
     }
 
@@ -156,33 +155,47 @@ public class CyclonMembership extends GenericProtocol {
         logger.error("Message {} to {} failed, reason: {}", msg, host, throwable);
     }
 
-    private void mergeViews(Map<Host,Integer> peerSample, Map<Host,Integer> mySample){
-        for(Map.Entry<Host,Integer> peerEntry: peerSample.entrySet()){
+    private void mergeViews(Map<Host,Integer> peerSample, Map<Host, Integer> mySample) {
+        for(Map.Entry<Host,Integer> peerEntry: peerSample.entrySet()) {
             if (peerEntry.getKey().equals(self)) continue;
-            if(neigh.containsKey(peerEntry.getKey())){
-                if(neigh.get(peerEntry.getKey())>peerEntry.getValue()){
-                    neigh.remove(peerEntry.getKey());
-                    neigh.put(peerEntry.getKey(),peerEntry.getValue());
+
+            if(neigh.containsKey(peerEntry.getKey())) {
+                // already have the neighbour, update only if the age is lower
+                if(neigh.get(peerEntry.getKey()) > peerEntry.getValue()) {
+                    neigh.put(peerEntry.getKey(), peerEntry.getValue());
                 }
             }
-            else if(neigh.size()<maxN){
-                neigh.put(peerEntry.getKey(),peerEntry.getValue());
+
+            else if(neigh.size() < maxN) {
+                // neighbourhood not full yet
+                neigh.put(peerEntry.getKey(), peerEntry.getValue());
                 openConnection(peerEntry.getKey());
             }
-            else{
-                Host host = null;
-                for(Host myHost: mySample.keySet()){
+
+            else {
+                // There is no space in the neighbourhood, we have to remove
+                Host hostToRemove = null;
+                for(Host myHost: mySample.keySet()) {
                     if (neigh.containsKey(myHost)) {
-                        host=myHost;
+                        hostToRemove=myHost;
                         break;
                     }
                 }
-                if(host==null){
-                    host = getRandom(neigh.keySet());
+                if(hostToRemove == null) {
+                    hostToRemove = getRandom(neigh.keySet());
                 }
-                neigh.remove(host);
-                closeConnection(host);
-                neigh.put(peerEntry.getKey(),peerEntry.getValue());
+
+                // safe remove
+                if (hostToRemove != null) {
+                    neigh.remove(hostToRemove);
+
+                    // IMPORTANT: only close the connection if it actually was opened
+                    triggerNotification(new NeighbourDown(hostToRemove));
+                    closeConnection(hostToRemove);
+                }
+
+                // add the new one
+                neigh.put(peerEntry.getKey(), peerEntry.getValue());
                 openConnection(peerEntry.getKey());
             }
         }
@@ -222,6 +235,7 @@ public class CyclonMembership extends GenericProtocol {
 
     //Gets a random element from the set of peers
     private Host getRandom(Set<Host> hostSet) {
+        if (hostSet.isEmpty()) return null;
         int idx = rnd.nextInt(hostSet.size());
         int i = 0;
         for (Host h : hostSet) {
@@ -252,10 +266,16 @@ public class CyclonMembership extends GenericProtocol {
     //respective peer to the membership, and inform the Dissemination protocol via a notification.
     private void uponOutConnectionUp(OutConnectionUp event, int channelId) {
         Host peer = event.getNode();
-        logger.debug("Connection to {} is up", peer);
-        if(neigh.size() < maxN) {
-            neigh.put(peer,0);
+
+        // only notificate if the peer is still in the neigh
+        if(neigh.containsKey(peer)) {
+            // put peer with age 0
+            neigh.put(peer, 0);
             triggerNotification(new NeighbourUp(peer));
+            logger.debug("Connection to {} is up", peer);
+        } else {
+            // if it already left the map , close the connection we opened by mistake
+            closeConnection(peer);
         }
     }
 
