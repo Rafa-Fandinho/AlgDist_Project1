@@ -35,8 +35,8 @@ public class HyParViewMembership extends GenericProtocol{
     private final Set<Host> passiveView;
     private final Set<Host> pending; //Peers I am trying to connect to
 
-    private final int maxActive = 4;
-    private final int maxPassive = 10;
+    private final int maxActive = 7;
+    private final int maxPassive = 20;
 
     private final int ARWL = 6; // Active Random Walk Length
     private final int PRWL = 3; // Passive Random Walk Length
