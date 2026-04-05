@@ -134,19 +134,22 @@ public class CyclonMembership extends GenericProtocol {
     }
 
     /*--------------------------------- Messages ---------------------------------------- */
+    // WHO RECEIVES THE SHUFFLE REQUEST AND WILL RESPOND
     private void uponShuffleRequest(ShuffleRequestMessage msg, Host from, short sourceProto, int channelId) {
         //Received a shuffle request from a neighbor. We answer with a sample of our own neighbors and merge the received host set
         //with our own neighbor list.
         logger.debug("Received {} from {}", msg, from);
         openConnection(from);
-        Map<Host,Integer> temporarySample = getRandomSubsetExcluding(neigh,subsetSize,from);
-        sendMessage(new ShuffleReplyMessage(temporarySample),from);
-        mergeViews(msg.getSample(),temporarySample);
+        Map<Host, Integer> temporarySample = getRandomSubsetExcluding(neigh, subsetSize, from);
+        sendMessage(new ShuffleReplyMessage(temporarySample), from);
+        mergeViews(msg.getSample(), temporarySample);
     }
+
+    // WHO FIRST SEND THE SHUFFLE REQUEST AND IS WAITING FOR RESPONSE
     private void uponShuffleReply(ShuffleReplyMessage msg, Host from, short sourceProto, int channelId) {
         //Received a shuffle response from a neighbor. We merge the received host set with our own neighbor list
         logger.debug("Received {} from {}", msg, from);
-        mergeViews(msg.getSample(),sample);
+        mergeViews(msg.getSample(), sample);
     }
 
     private void uponMsgFail(ProtoMessage msg, Host host, short destProto,
@@ -156,8 +159,8 @@ public class CyclonMembership extends GenericProtocol {
     }
 
     private void mergeViews(Map<Host,Integer> peerSample, Map<Host, Integer> mySample) {
-        for(Map.Entry<Host,Integer> peerEntry: peerSample.entrySet()) {
-            if (peerEntry.getKey().equals(self)) continue;
+        for(Map.Entry<Host, Integer> peerEntry: peerSample.entrySet()) {
+            if (peerEntry.getKey().equals(self)) continue;  // good practice
 
             if(neigh.containsKey(peerEntry.getKey())) {
                 // already have the neighbour, update only if the age is lower
@@ -169,7 +172,7 @@ public class CyclonMembership extends GenericProtocol {
             else if(neigh.size() < maxN) {
                 // neighbourhood not full yet
                 neigh.put(peerEntry.getKey(), peerEntry.getValue());
-                openConnection(peerEntry.getKey());
+                openConnection(peerEntry.getKey());     // trigger NeighbourUp
             }
 
             else {
@@ -177,7 +180,7 @@ public class CyclonMembership extends GenericProtocol {
                 Host hostToRemove = null;
                 for(Host myHost: mySample.keySet()) {
                     if (neigh.containsKey(myHost)) {
-                        hostToRemove=myHost;
+                        hostToRemove = myHost;
                         break;
                     }
                 }
@@ -188,39 +191,38 @@ public class CyclonMembership extends GenericProtocol {
                 // safe remove
                 if (hostToRemove != null) {
                     neigh.remove(hostToRemove);
-
-                    // IMPORTANT: only close the connection if it actually was opened
-                    triggerNotification(new NeighbourDown(hostToRemove));
-                    closeConnection(hostToRemove);
+                    closeConnection(hostToRemove);          // trigger NeighbourDown
                 }
 
                 // add the new one
                 neigh.put(peerEntry.getKey(), peerEntry.getValue());
-                openConnection(peerEntry.getKey());
+                openConnection(peerEntry.getKey());         // trigger NeighbourUp
             }
         }
     }
 
     /*--------------------------------- Timers ---------------------------------------- */
+    // WHEN WE SEND THE SHUFFLE REQUEST TO THE OLDEST NODE
     private void uponShuffleTimer(ShuffleTimer timer, long timerId) {
         //When the ShuffleTimer is triggered, increment the age of all registered neighbors and send a shuffle request
         logger.debug("Shuffle Time: neighbourhood{}", neigh);
-        for(Map.Entry<Host,Integer> neighbor : neigh.entrySet()){
-            neighbor.setValue(neighbor.getValue()+1);
-        }
-        Host p = getOldest();
-        if(p != null){
-            sample=getRandomSubsetExcluding(neigh,subsetSize-1,p);
-            sample.put(self,0);
 
-            neigh.remove(p);
+        neigh.replaceAll((h, age) -> age + 1);
 
-            openConnection(p);
-            sendMessage(new ShuffleRequestMessage(sample), p);
+        Host oldest = getOldest();
+        if(oldest != null) {
+            sample = getRandomSubsetExcluding(neigh,subsetSize - 1, oldest);
+            sample.put(self, 0);
+
+            neigh.remove(oldest);
+            triggerNotification(new NeighbourDown(oldest));
+
+            openConnection(oldest);
+            sendMessage(new ShuffleRequestMessage(sample), oldest);
         }
     }
 
-    //Gets a random element from the set of peers
+    //Gets the oldest element from the set of peers
     private Host getOldest() {
         int highestAge=-1;
         Host oldest = null;
@@ -264,6 +266,7 @@ public class CyclonMembership extends GenericProtocol {
 
     //If a connection is successfully established, this event is triggered. In this protocol, we want to add the
     //respective peer to the membership, and inform the Dissemination protocol via a notification.
+    // CALLED WHEN openConnection() IS CALLED
     private void uponOutConnectionUp(OutConnectionUp event, int channelId) {
         Host peer = event.getNode();
 
@@ -273,9 +276,6 @@ public class CyclonMembership extends GenericProtocol {
             neigh.put(peer, 0);
             triggerNotification(new NeighbourUp(peer));
             logger.debug("Connection to {} is up", peer);
-        } else {
-            // if it already left the map , close the connection we opened by mistake
-            closeConnection(peer);
         }
     }
 
@@ -284,7 +284,9 @@ public class CyclonMembership extends GenericProtocol {
     private void uponOutConnectionDown(OutConnectionDown event, int channelId) {
         Host peer = event.getNode();
         logger.debug("Connection to {} is down cause {}", peer, event.getCause());
-        neigh.remove(event.getNode());
+
+        neigh.remove(event.getNode());      // returns null if there is no key with such value
+
         triggerNotification(new NeighbourDown(event.getNode()));
     }
 
