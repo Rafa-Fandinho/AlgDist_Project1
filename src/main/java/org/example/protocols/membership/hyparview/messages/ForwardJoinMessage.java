@@ -45,7 +45,7 @@ public class ForwardJoinMessage extends ProtoMessage {
     public static ISerializer<ForwardJoinMessage> serializer = new ISerializer<>() {
         @Override
         public void serialize(ForwardJoinMessage msg, ByteBuf out) throws IOException {
-            Host.serializer.serialize(msg.sender, out);
+            Host.serializer.serialize(msg.newNode, out);
             out.writeInt(msg.ttl);
             Host.serializer.serialize(msg.sender, out);
         }
