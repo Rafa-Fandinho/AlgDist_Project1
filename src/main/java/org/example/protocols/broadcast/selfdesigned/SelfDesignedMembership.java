@@ -17,8 +17,8 @@ import pt.unl.fct.di.novasys.network.data.Host;
 import java.io.IOException;
 import java.util.*;
 
-public class SelfDesignedBroadcast extends GenericProtocol {
-    private static final Logger logger = LogManager.getLogger(org.example.protocols.broadcast.selfdesigned.SelfDesignedBroadcast.class);
+public class SelfDesignedMembership extends GenericProtocol {
+    private static final Logger logger = LogManager.getLogger(SelfDesignedMembership.class);
     private static final Integer MAX_HOPS = 10;
     private static final Integer COUNTER_THRESHOLD = 5;
     //Protocol information, to register in babel
@@ -33,7 +33,7 @@ public class SelfDesignedBroadcast extends GenericProtocol {
     //We can only start sending messages after the membership protocol informed us that the channel is ready
     private boolean channelReady;
 
-    public SelfDesignedBroadcast(Properties properties, Host myself) throws IOException, HandlerRegistrationException {
+    public SelfDesignedMembership(Properties properties, Host myself) throws IOException, HandlerRegistrationException {
         super(PROTOCOL_NAME, PROTOCOL_ID);
         this.myself = myself;
         neighbours = new HashSet<>();
