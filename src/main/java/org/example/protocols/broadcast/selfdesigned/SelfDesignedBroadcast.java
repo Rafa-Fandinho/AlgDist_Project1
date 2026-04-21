@@ -82,7 +82,7 @@ public class SelfDesignedBroadcast extends GenericProtocol {
         if (!channelReady) return; //Ideally we would buffer this message to transmit when the channel is ready :)
 
         //Create the message object.
-        SelfDesignedMessage msg = new SelfDesignedMessage(request.getMsgId(), request.getSender(), sourceProto, request.getMsg(), 0);
+        SelfDesignedMessage msg = new SelfDesignedMessage(request.getMsgId(), request.getSender(), sourceProto, request.getMsg(), 0, 0);
 
         //Call the auxiliary function to send the message to our neighborhood
         forward(msg, myself);
@@ -97,12 +97,19 @@ public class SelfDesignedBroadcast extends GenericProtocol {
             if (received.add(msg.getMid())) {
                 //Deliver the message to the application (even if it came from it)
                 triggerNotification(new DeliverNotification(msg.getMid(), msg.getSender(), msg.getContent()));
-                //Add the message to the counters array
-                counters.put(msg.getMid(),1);
-                //Finally, we manage the timer for it to eventually handle the forwarding
-                int wait_time = CalculateDelay(msg);
-                WaitTimer wait_timer = new WaitTimer(msg,from);
-                setupTimer(wait_timer,wait_time);
+                //In order to reduce the overload in the first round, there is a probability to not rebroadcast
+                if(msg.getHops()==1 && msg.getSequence()<2*COUNTER_THRESHOLD){
+                    forward(msg, from);
+                }
+                else {
+                    //Add the message to the counters array
+                    counters.put(msg.getMid(), 1);
+                    //Finally, we manage the timer for it to eventually handle the forwarding
+                    int wait_time = CalculateDelay(msg);
+                    WaitTimer wait_timer = new WaitTimer(msg, from);
+                    setupTimer(wait_timer, wait_time);
+
+                }
             }
             else{
                 if (counters.containsKey(msg.getMid())) { //If we are still in waiting mode for this message
@@ -121,13 +128,25 @@ public class SelfDesignedBroadcast extends GenericProtocol {
 
     private void forward(SelfDesignedMessage msg, Host from){
         msg.incrementHops();    //We increment one hop since the message is passing through us
-        //Simply send the message to every known neighbour (who will then do the same)
-        neighbours.forEach(host -> {
-            if (!host.equals(from)) {
-                logger.trace("Sent {} to {}", msg, host);
-                sendMessage(msg, host);
-            }
-        });
+        //Simply send the message to every known neighbour (who will then do the same). In the first round sequence number matters so we send copies in order to not
+        //overwrite the sent variable, every other time we save the work of doing that.
+        if(msg.getHops() == 1){
+            neighbours.forEach(host -> {
+                if (!host.equals(from)) {
+                    logger.trace("Sent {} to {}", msg, host);
+                    sendMessage(new SelfDesignedMessage(msg), host);
+                    msg.incrementSequence();
+                }
+            });
+        }
+        else {
+            neighbours.forEach(host -> {
+                if (!host.equals(from)) {
+                    logger.trace("Sent {} to {}", msg, host);
+                    sendMessage(msg, host);
+                }
+            });
+        }
     }
     //Function to generate a random wait time for the duplicate collection
     private Integer CalculateDelay(SelfDesignedMessage msg){

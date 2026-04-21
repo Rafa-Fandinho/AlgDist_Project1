@@ -14,6 +14,7 @@ public class SelfDesignedMessage extends ProtoMessage {
     private final UUID mid;
     private final Host sender;
     private Integer hops;
+    private Integer sequence;
 
     private final short toDeliver;
     private final byte[] content;
@@ -25,13 +26,24 @@ public class SelfDesignedMessage extends ProtoMessage {
                 '}';
     }
 
-    public SelfDesignedMessage(UUID mid, Host sender, short toDeliver, byte[] content, int hops) {
+    public SelfDesignedMessage(UUID mid, Host sender, short toDeliver, byte[] content, int hops, int sequence) {
         super(MSG_ID);
         this.mid = mid;
         this.sender = sender;
         this.toDeliver = toDeliver;
         this.content = content;
         this.hops = hops;
+        this.sequence = sequence;
+    }
+
+    public SelfDesignedMessage(SelfDesignedMessage msg) {
+        super(MSG_ID);
+        this.mid = msg.getMid();
+        this.sender = msg.getSender();
+        this.toDeliver = msg.getToDeliver();
+        this.content = msg.getContent();
+        this.hops = msg.getHops();
+        this.sequence = msg.getSequence();
     }
 
     public Host getSender() {
@@ -52,8 +64,14 @@ public class SelfDesignedMessage extends ProtoMessage {
 
     public Integer getHops() { return hops; }
 
+    public Integer getSequence() { return  sequence; }
+
     public void incrementHops() {
         hops++;
+    }
+
+    public void incrementSequence() {
+        sequence++;
     }
 
     public static ISerializer<org.example.protocols.broadcast.selfdesigned.messages.SelfDesignedMessage> serializer = new ISerializer<>() {
@@ -68,6 +86,7 @@ public class SelfDesignedMessage extends ProtoMessage {
                 out.writeBytes(selfDesignedMessage.content);
             }
             out.writeInt(selfDesignedMessage.hops);
+            out.writeInt(selfDesignedMessage.sequence);
         }
 
         @Override
@@ -82,8 +101,9 @@ public class SelfDesignedMessage extends ProtoMessage {
             if (size > 0)
                 in.readBytes(content);
             int hops = in.readInt();
+            int sequence = in.readInt();
 
-            return new org.example.protocols.broadcast.selfdesigned.messages.SelfDesignedMessage(mid, sender, toDeliver, content, hops);
+            return new org.example.protocols.broadcast.selfdesigned.messages.SelfDesignedMessage(mid, sender, toDeliver, content, hops, sequence);
         }
     };
 }
