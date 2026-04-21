@@ -58,7 +58,7 @@ public class Main {
         GenericProtocol broadcast = switch (broadcastType.toLowerCase()) {
             case "flood" -> new FloodBroadcast(props, myself);
             case "eagerpush" -> new EagerPushBroadcast(props, myself);
-            case "self-design" -> new SelfDesignedBroadcast(props, myself);
+            case "selfdesign" -> new SelfDesignedBroadcast(props, myself);
             default -> throw new IllegalArgumentException("Unknown broadcast: " + broadcastType);
         };
 
