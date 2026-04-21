@@ -5,6 +5,7 @@ import org.apache.logging.log4j.Logger;
 import org.example.protocols.apps.BroadcastApp;
 import org.example.protocols.broadcast.eagerpush.EagerPushBroadcast;
 import org.example.protocols.broadcast.flood.FloodBroadcast;
+import org.example.protocols.broadcast.selfdesigned.SelfDesignedBroadcast;
 import org.example.protocols.membership.cyclon.CyclonMembership;
 import org.example.protocols.membership.full.GossipBasedFullMembership;
 import org.example.protocols.membership.hyparview.HyParViewMembership;
@@ -57,6 +58,7 @@ public class Main {
         GenericProtocol broadcast = switch (broadcastType.toLowerCase()) {
             case "flood" -> new FloodBroadcast(props, myself);
             case "eagerpush" -> new EagerPushBroadcast(props, myself);
+            case "self-design" -> new SelfDesignedBroadcast(props, myself);
             default -> throw new IllegalArgumentException("Unknown broadcast: " + broadcastType);
         };
 
