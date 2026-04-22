@@ -20,10 +20,13 @@ import java.util.*;
 public class SelfDesignedBroadcast extends GenericProtocol {
     private static final Logger logger = LogManager.getLogger(org.example.protocols.broadcast.selfdesigned.SelfDesignedBroadcast.class);
     private static final Integer MAX_HOPS = 10;
-    private static final Integer COUNTER_THRESHOLD = 5;
+    private int counterThreshold;
     //Protocol information, to register in babel
     public static final String PROTOCOL_NAME = "Self-Designed";
     public static final short PROTOCOL_ID = 202;
+
+    public static final String PAR_COUNTER_THRESHOLD = "protocol.broadcast.counter_threshold";
+    public static final String PAR_DEFAULT_COUNTER_THRESHOLD = "5";
 
     private final Host myself; //My own address/port
     private final Set<Host> neighbours; //My known neighbours (a.k.a peers the membership protocol told me about)
@@ -55,7 +58,9 @@ public class SelfDesignedBroadcast extends GenericProtocol {
 
     @Override
     public void init(Properties props) {
-        //Nothing to do here, we just wait for event from the membership or the application
+        this.counterThreshold = Integer.parseInt(
+                props.getProperty(PAR_COUNTER_THRESHOLD, PAR_DEFAULT_COUNTER_THRESHOLD)
+        );
     }
 
     //Upon receiving the channelId from the membership, register our own callbacks and serializers
@@ -98,7 +103,7 @@ public class SelfDesignedBroadcast extends GenericProtocol {
                 //Deliver the message to the application (even if it came from it)
                 triggerNotification(new DeliverNotification(msg.getMid(), msg.getSender(), msg.getContent()));
                 //In order to reduce the overload in the first round, there is a probability to not rebroadcast
-                if(msg.getHops()==1 && msg.getSequence()<2*COUNTER_THRESHOLD){
+                if(msg.getHops()==1 && msg.getSequence()<2*counterThreshold){
                     forward(msg, from);
                 }
                 else {
@@ -159,7 +164,7 @@ public class SelfDesignedBroadcast extends GenericProtocol {
     }
     //When the wait timer runs out, we count the number of duplicates and decide whether to forward the message
     private void uponWaitTimer(WaitTimer timer, long timerId){
-        if(counters.get(timer.getMsg().getMid()) < COUNTER_THRESHOLD){
+        if(counters.get(timer.getMsg().getMid()) < counterThreshold){
             forward(timer.getMsg(), timer.getFrom());
         }
         counters.remove(timer.getMsg().getMid());
